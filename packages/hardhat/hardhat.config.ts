@@ -7,6 +7,9 @@ dotEnvConfig();
 
 const config: HardhatUserConfig = {
   networks: {
+    hardhat: {
+      chainId: 31337,
+  },
     alfajores: {
       accounts: [process.env.PRIVATE_KEY ?? '0x0'],
       url: 'https://alfajores-forno.celo-testnet.org',
