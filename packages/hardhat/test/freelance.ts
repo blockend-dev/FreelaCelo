@@ -1,39 +1,51 @@
-import { expect, assert } from 'chai';
-import hre from "hardhat";
-import * as ethers from "ethers";
+import { expect } from "chai";
+import { ethers } from "hardhat";
+import { Freelance } from "../typechain-types"; // Import the generated type
 
-describe('Freelance ', ()=>{
+describe("FreelancerRegistration", function () {
+  let freelancerContract: Freelance;
+  let owner;
+  let freelancer;
 
-    const freelancerName = "Test Freelancer";
-    const freelancerSkills = "Solidity, JavaScript";
-    const freelancerCountry = 'Nigeria';
-    const freelancerGigTitle = 'I will design and develop a dApp';
-    const images = ['https://image.com/freelancerImage','https://image.com/gigImage'];
-    const freelancerGigDesc = 'Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using ';
-    const starting_price = '100';
+  beforeEach(async function () {
+    // Deploy the contract
+    const FreelancerContract = await ethers.getContractFactory("Freelance");
+    freelancerContract =  (await FreelancerContract.deploy()) as unknown as Freelance
+    await freelancerContract.waitForDeployment();
 
-    let freelancer,employer,intermediary,dfreelancer
+    // Get signers
+    [owner, freelancer] = await ethers.getSigners();
+  });
+
+  it("Should register a freelancer successfully", async function () {
+    const name = "John Doe";
+    const skills = "Web Development";
+    const country = "USA";
+    const gigTitle = "Build a Website";
+    const gigDesc = "I will build a responsive website for your business.";
+    const images = ["image1.png", "image2.png"];
+    const startingPrice = ethers.parseEther("0.1");
+
+    // Get the freelancer's address
+    const freelancerAddress = await freelancer.getAddress();
+
+    // Register the freelancer
+    await expect(
+      freelancerContract
+        .connect(freelancer)
+        .registerFreelancer(name, skills, country, gigTitle, gigDesc, images, startingPrice)
+    )
+      .to.emit(freelancerContract, "FreelancerRegistered")
+      .withArgs(freelancerAddress, images, startingPrice);
+
+    // Check if the freelancer is registered
+    const freelancerInfo = await freelancerContract.freelancers(freelancerAddress);
+    expect(freelancerInfo.registered).to.be.true;
+    expect(freelancerInfo.name).to.equal(name);
+    expect(freelancerInfo.skills).to.equal(skills);
+    expect(freelancerInfo.country).to.equal(country);
+    expect(freelancerInfo.gigTitle).to.equal(gigTitle);
+  });
+
   
-
-    before(async function () {
-        [freelancer, employer,intermediary] = await hre.ethers.getSigners();
-        
-        const contractFactory = await hre.ethers.getContractFactory("Freelance");
-        dfreelancer = await contractFactory.deploy();
-    });
-
-    //  registering freelancer,
-    it("Should register a freelancer", async function () {
-        await (dfreelancer.connect(freelancer))
-        .registerFreelancer(freelancerName, freelancerSkills,freelancerCountry,
-        freelancerGigTitle,freelancerGigDesc, images,starting_price);
-       
-        const registeredFreelancer = await dfreelancer.freelancers(freelancer.address);
-        expect(registeredFreelancer.freelancerAddress).to.equal(freelancer.address);
-        expect(registeredFreelancer.name).to.equal(freelancerName);
-        expect(registeredFreelancer.skills).to.equal(freelancerSkills);
-        expect(registeredFreelancer.balance.toString()).to.equal('0');
-    });
-
-    
 });

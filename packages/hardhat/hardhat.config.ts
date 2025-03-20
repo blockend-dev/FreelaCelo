@@ -1,4 +1,4 @@
-import '@nomicfoundation/hardhat-toolbox';
+import '@nomicfoundation/hardhat-toolbox'; // Includes ethers.js v6
 import '@nomicfoundation/hardhat-verify';
 import { config as dotEnvConfig } from 'dotenv';
 import { HardhatUserConfig } from 'hardhat/config';
@@ -9,20 +9,20 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       chainId: 31337,
-  },
+    },
     alfajores: {
-      accounts: [process.env.PRIVATE_KEY ?? '0x0'],
+      accounts: [process.env.PRIVATE_KEY ?? '0x0'], // Use environment variable for private key
       url: 'https://alfajores-forno.celo-testnet.org',
     },
     celo: {
-      accounts: [process.env.PRIVATE_KEY ?? '0x0'],
+      accounts: [process.env.PRIVATE_KEY ?? '0x0'], // Use environment variable for private key
       url: 'https://forno.celo.org',
     },
   },
   etherscan: {
     apiKey: {
-      alfajores: process.env.CELOSCAN_API_KEY ?? '',
-      celo: process.env.CELOSCAN_API_KEY ?? '',
+      alfajores: process.env.CELOSCAN_API_KEY ?? '', // Use environment variable for API key
+      celo: process.env.CELOSCAN_API_KEY ?? '', // Use environment variable for API key
     },
     customChains: [
       {
@@ -44,9 +44,21 @@ const config: HardhatUserConfig = {
     ],
   },
   sourcify: {
-    enabled: false,
+    enabled: false, // Disable Sourcify verification
   },
-  solidity: '0.8.24',
+  solidity: {
+    version: '0.8.24', // Specify Solidity version
+    settings: {
+      optimizer: {
+        enabled: true, // Enable Solidity optimizer
+        runs: 200, // Optimize for 200 runs
+      },
+    },
+  },
+  typechain: {
+    outDir: 'typechain-types', // Output directory for TypeChain types
+    target: 'ethers-v6', // Use ethers.js v6 as the target
+  },
 };
 
 export default config;
