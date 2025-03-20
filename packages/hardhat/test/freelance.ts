@@ -68,5 +68,41 @@ describe("FreelancerRegistration", function () {
     expect(job.completed).to.be.false;
   });
 
+  // Test: Hiring a freelancer
+  it("Should hire a freelancer", async function () {
+    await freelancerContract
+    .connect(employer)
+    .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
+  await freelancerContract
+    .connect(employer)
+    .createJob(gigTitle, gigDesc, startingPrice);
+
+    await freelancerContract.connect(freelancer).applyForJob("1");
+    await freelancerContract.connect(employer).hireFreelancer("1", await freelancer.getAddress());
+
+    const job = await freelancerContract.getJobByID("1");
+    expect(job.hiredFreelancer).to.equal(await freelancer.getAddress());
+  });
+
+  // Test: Depositing funds by employer
+  it("Should deposit funds to a job", async function () {
+
+    await freelancerContract
+    .connect(employer)
+    .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
+  await freelancerContract
+    .connect(employer)
+    .createJob(gigTitle, gigDesc, startingPrice);
+    
+    const fund = "100";
+    await freelancerContract
+      .connect(employer)
+      .depositFunds("1", { value: ethers.parseEther(fund) });
+
+    const escrowFund = await freelancerContract.getEmployerEscrow(await employer.getAddress(), "1");
+    const _employer = await freelancerContract.getEmployerByAddress(await employer.getAddress());
+    expect(_employer.balance).to.equal(ethers.parseEther(fund));
+    expect(escrowFund).to.equal(ethers.parseEther(fund));
+  });
 
 });
