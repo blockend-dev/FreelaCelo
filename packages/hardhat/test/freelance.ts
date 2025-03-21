@@ -71,11 +71,11 @@ describe("FreelancerRegistration", function () {
   // Test: Hiring a freelancer
   it("Should hire a freelancer", async function () {
     await freelancerContract
-    .connect(employer)
-    .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
-  await freelancerContract
-    .connect(employer)
-    .createJob(gigTitle, gigDesc, startingPrice);
+      .connect(employer)
+      .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
+    await freelancerContract
+      .connect(employer)
+      .createJob(gigTitle, gigDesc, startingPrice);
 
     await freelancerContract.connect(freelancer).applyForJob("1");
     await freelancerContract.connect(employer).hireFreelancer("1", await freelancer.getAddress());
@@ -88,12 +88,12 @@ describe("FreelancerRegistration", function () {
   it("Should deposit funds to a job", async function () {
 
     await freelancerContract
-    .connect(employer)
-    .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
-  await freelancerContract
-    .connect(employer)
-    .createJob(gigTitle, gigDesc, startingPrice);
-    
+      .connect(employer)
+      .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
+    await freelancerContract
+      .connect(employer)
+      .createJob(gigTitle, gigDesc, startingPrice);
+
     const fund = "100";
     await freelancerContract
       .connect(employer)
@@ -103,6 +103,54 @@ describe("FreelancerRegistration", function () {
     const _employer = await freelancerContract.getEmployerByAddress(await employer.getAddress());
     expect(_employer.balance).to.equal(ethers.parseEther(fund));
     expect(escrowFund).to.equal(ethers.parseEther(fund));
+  });
+
+  // Test: Completing a job
+  it("Should complete a job", async function () {
+    await freelancerContract
+      .connect(employer)
+      .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
+    await freelancerContract
+      .connect(employer)
+      .createJob(gigTitle, gigDesc, startingPrice);
+
+    const fund = "100";
+    await freelancerContract
+      .connect(employer)
+      .depositFunds("1", { value: ethers.parseEther(fund) });
+
+    await freelancerContract.connect(freelancer).applyForJob("1");
+    await freelancerContract.connect(employer).hireFreelancer("1", await freelancer.getAddress());
+
+    await freelancerContract.connect(employer).completeJob("1", await freelancer.getAddress());
+
+    const job = await freelancerContract.getJobByID("1");
+    expect(job.completed).to.be.true;
+    expect(job.hiredFreelancer).to.equal(await freelancer.getAddress());
+  });
+
+  // Test: Releasing escrow funds to freelancer after job completion
+  it("Should release escrow funds to a freelancer", async function () {
+
+    await freelancerContract
+      .connect(employer)
+      .registerEmployer("Ahmod", "technology", "United States", "https://img.com");
+    await freelancerContract
+      .connect(employer)
+      .createJob(gigTitle, gigDesc, startingPrice);
+
+    const fund = "100";
+
+    await freelancerContract.connect(freelancer).applyForJob("1");
+    await freelancerContract.connect(employer).hireFreelancer("1", await freelancer.getAddress());
+    await freelancerContract
+      .connect(employer)
+      .depositFunds("1", { value: ethers.parseEther(fund) });
+    await freelancerContract.connect(employer).completeJob("1", await freelancer.getAddress());
+    await freelancerContract.connect(employer).releaseEscrow("1", await freelancer.getAddress());
+
+    const updatedBalance = (await freelancerContract.freelancers(await freelancer.getAddress())).balance;
+    expect(updatedBalance.toString()).to.equal(ethers.parseEther(fund).toString());
   });
 
 });
